@@ -1,0 +1,23 @@
+# Environment variables
+.env
+*.env
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Streamlit config
+.streamlit/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
