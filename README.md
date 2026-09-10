@@ -1,237 +1,529 @@
 # 🎫 Mini Helpdesk
 
-A clean, beginner-friendly, and fully functional full-stack support ticket management system built with **FastAPI**, **Streamlit**, **MongoDB Atlas**, and **Docker**.
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge\&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge\&logo=fastapi)
+![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?style=for-the-badge\&logo=streamlit)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge\&logo=mongodb)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge\&logo=docker)
+
+### A clean and beginner-friendly Full-Stack Helpdesk Ticket Management System
+
+**FastAPI ⚡ | Streamlit 🎨 | MongoDB Atlas ☁️ | Docker 🐳**
+
+</div>
 
 ---
 
-## 📑 Table of Contents
+## 📌 Overview
 
-- [Architecture & Data Flow](#architecture--data-flow)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Features](#features)
-- [MongoDB Atlas Setup Guide](#mongodb-atlas-setup-guide)
-- [Local Development Setup (Without Docker)](#local-development-setup-without-docker)
-- [Docker Setup (With Docker Compose)](#docker-setup-with-docker-compose)
-- [API Documentation & Testing (Swagger)](#api-documentation--testing-swagger)
-- [Error Handling](#error-handling)
+**Mini Helpdesk** is a full-stack support ticket management system designed to simplify the process of creating, tracking, updating, and resolving customer support tickets.
+
+The application uses **Streamlit** for the frontend, **FastAPI** for the REST API backend, and **MongoDB Atlas** for cloud-based data storage.
+
+The complete application is containerized using **Docker and Docker Compose** for easy local development and deployment.
 
 ---
 
 ## 🏗️ Architecture & Data Flow
 
 ```text
-Streamlit (Port 8501)
-       ↓ (HTTP REST Requests)
-FastAPI Backend (Port 8000)
-       ↓ (PyMongo Driver)
-MongoDB Atlas (helpdesk_db.tickets)
-       ↓ (BSON Documents)
-FastAPI Backend (Converts ObjectId to string 'id')
-       ↓ (JSON Responses)
-Streamlit (Port 8501 - Renders UI)
+┌──────────────────────┐
+│      Streamlit       │
+│      Frontend        │
+└──────────┬───────────┘
+           │
+           │ HTTP REST API
+           ▼
+┌──────────────────────┐
+│       FastAPI        │
+│       Backend        │
+└──────────┬───────────┘
+           │
+           │ PyMongo
+           ▼
+┌──────────────────────┐
+│    MongoDB Atlas     │
+│       Database       │
+└──────────────────────┘
 ```
 
-1. **User Interaction**: Users interact with the clean Streamlit web application to view metrics, submit tickets, search, update status, or delete tickets.
-2. **HTTP Requests**: Streamlit sends standard REST API requests (`GET`, `POST`, `PUT`, `DELETE`) via Python's `requests` library to the FastAPI backend. **Streamlit never connects directly to MongoDB.**
-3. **Validation & Business Logic**: FastAPI validates incoming request payloads using Pydantic models and enforces valid categories, priorities, and statuses.
-4. **Database Persistence**: PyMongo executes queries against MongoDB Atlas cloud database collection `tickets`.
-5. **Serialization**: MongoDB's internal `_id` (`ObjectId`) is converted to a standard JSON string `id`, preventing serialization errors before returning the response.
+### Request Flow
+
+```text
+User
+ ↓
+Streamlit UI
+ ↓
+FastAPI REST API
+ ↓
+MongoDB Atlas
+ ↓
+FastAPI Response
+ ↓
+Streamlit UI
+```
 
 ---
 
 ## 🛠️ Technology Stack
 
-### Backend
-* **Python 3.11**
-* **FastAPI**: Modern, high-performance web framework for building APIs.
-* **Uvicorn**: Lightning-fast ASGI server.
-* **PyMongo**: Official Python driver for MongoDB.
-* **Pydantic**: Data validation and type safety.
-* **python-dotenv**: Reads environment variables from `.env`.
-
-### Frontend
-* **Streamlit**: Python framework for building interactive web applications.
-* **Requests**: Clean HTTP library for communicating with FastAPI.
-* **Pandas**: Data formatting and table rendering.
-
-### Database
-* **MongoDB Atlas**: Fully managed cloud NoSQL database.
-
-### Deployment
-* **Docker & Docker Compose**: Containerized multi-service deployment.
+| Layer                | Technology            |
+| -------------------- | --------------------- |
+| Frontend             | Streamlit             |
+| Backend              | FastAPI               |
+| Programming Language | Python                |
+| Database             | MongoDB Atlas         |
+| Database Driver      | PyMongo               |
+| API Server           | Uvicorn               |
+| API Testing          | Swagger UI            |
+| Containerization     | Docker                |
+| Orchestration        | Docker Compose        |
+| Configuration        | Environment Variables |
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```text
 mini-helpdesk/
 │
 ├── backend/
-│   ├── main.py              # FastAPI endpoints & business logic
-│   ├── database.py          # MongoDB Atlas connection & ObjectId helper
-│   ├── models.py            # Pydantic schemas and Enums
-│   ├── requirements.txt     # Backend dependencies
-│   └── Dockerfile           # Backend container definition
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   ├── requirements.txt
+│   └── Dockerfile
 │
 ├── frontend/
-│   ├── app.py               # Streamlit application UI & API client
-│   ├── requirements.txt     # Frontend dependencies
-│   └── Dockerfile           # Frontend container definition
+│   ├── app.py
+│   ├── requirements.txt
+│   └── Dockerfile
 │
-├── .env                     # Private environment variables (ignored by git)
-├── .env.example             # Template environment variables
-├── .gitignore               # Git ignore file
-├── docker-compose.yml       # Docker Compose multi-container setup
-└── README.md                # Project documentation
+├── .env
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md
 ```
 
 ---
 
 ## ✨ Features
 
-1. **Dashboard**: Shows metrics for Total Tickets, Open Tickets, In Progress Tickets, Resolved Tickets, and High Priority Tickets.
-2. **Create Ticket**: Form with User Name, Email, Ticket Title, Description, Category (*Technical, Billing, Account, General*), and Priority (*Low, Medium, High*). Defaults to status **Open**.
-3. **View All Tickets**: Interactive table with Ticket ID, User Name, Title, Category, Priority, Status, and Created Date.
-4. **Search Ticket**: Look up tickets by Ticket ID (24-character hex) or keyword in the Title.
-5. **Update Ticket**: Modify ticket status (*Open*, *In Progress*, *Resolved*) using its Ticket ID.
-6. **Delete Ticket**: Remove a ticket permanently by its ID with confirmation and feedback.
+### 🎫 Ticket Management
 
----
+* Create new support tickets
+* View all tickets
+* Search tickets
+* View individual ticket details
+* Update ticket status
+* Delete tickets
 
-## 🌐 MongoDB Atlas Setup Guide
+### 📊 Dashboard
 
-Follow these beginner-friendly steps to configure your free MongoDB Atlas database:
+The dashboard provides quick statistics such as:
 
-1. **Create an Account**: Go to [mongodb.com/atlas](https://www.mongodb.com/atlas) and sign up for a free account.
-2. **Create a Free Cluster**:
-   - Choose the **M0 Free** shared cluster.
-   - Select your preferred cloud provider (e.g. AWS) and the nearest region.
-   - Click **Create Cluster**.
-3. **Create Database User**:
-   - In the left sidebar, navigate to **Security** → **Database Access**.
-   - Click **Add New Database User**.
-   - Select **Password Authentication**.
-   - Enter a username and a strong password (remember these).
-   - Set Built-in Role to **Read and write to any database**.
-   - Click **Add User**.
-4. **Configure Network Access**:
-   - In the left sidebar, navigate to **Security** → **Network Access**.
-   - Click **Add IP Address**.
-   - For development, choose **Allow Access From Anywhere** (`0.0.0.0/0`) or add your current IP address.
-   - Click **Confirm**.
-5. **Retrieve Connection String**:
-   - Navigate to **Deployments** → **Database**.
-   - Click **Connect** next to your cluster.
-   - Choose **Drivers** (Python / version 3.11 or later).
-   - Copy the connection URI:
-     ```text
-     mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?appName=Cluster0
-     ```
-   - Replace `<username>` and `<password>` with the credentials created in Step 3.
-6. **Configure `.env` File**:
-   - Create a file named `.env` in the `mini-helpdesk` folder:
-     ```env
-     MONGODB_URL=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?appName=Cluster0
-     DATABASE_NAME=helpdesk_db
-     ```
+* Total tickets
+* Open tickets
+* In Progress tickets
+* Resolved tickets
+* High-priority tickets
 
----
+### 🏷️ Ticket Categories
 
-## 💻 Local Development Setup (Without Docker)
+Tickets can be categorized into:
 
-You can run both FastAPI and Streamlit locally using **Windows PowerShell**:
+* 💻 Technical
+* 💳 Billing
+* 👤 Account
+* 📌 General
 
-### 1. Open Windows PowerShell & Navigate to Project
+### 🚦 Priority Levels
 
-```powershell
-cd mini-helpdesk
+Each ticket can have one of the following priority levels:
+
+* 🟢 Low
+* 🟡 Medium
+* 🔴 High
+
+### 🔄 Ticket Status
+
+Tickets follow a simple lifecycle:
+
+```text
+🆕 Open
+   ↓
+🔧 In Progress
+   ↓
+✅ Resolved
 ```
 
-### 2. Create and Activate a Python Virtual Environment
+---
+
+## 🗄️ MongoDB Database
+
+The application uses **MongoDB Atlas** as the cloud database.
+
+### Database
+
+```text
+helpdesk_db
+```
+
+### Collection
+
+```text
+tickets
+```
+
+### Ticket Document
+
+```json
+{
+  "_id": "ObjectId",
+  "user_name": "John Doe",
+  "email": "john@example.com",
+  "title": "Unable to login",
+  "description": "I cannot access my account.",
+  "category": "Account",
+  "priority": "High",
+  "status": "Open",
+  "created_at": "2026-09-10T10:30:00"
+}
+```
+
+---
+
+# 🚀 Getting Started
+
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/ruthika-23/Mini-Helpdesk-Fastapi-Project-.git
+```
+
+```bash
+cd Mini-Helpdesk-Fastapi-Project-
+```
+
+---
+
+## 2️⃣ Create a Virtual Environment
+
+### Windows
 
 ```powershell
-# Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
-.\venv\Scripts\Activate.ps1
 ```
 
-*(If PowerShell displays a script execution policy error, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` and reactivate).*
-
-### 3. Install Dependencies
+Activate it:
 
 ```powershell
-# Install backend packages
-pip install -r backend/requirements.txt
-
-# Install frontend packages
-pip install -r frontend/requirements.txt
+venv\Scripts\activate
 ```
 
-### 4. Create the `.env` File
+### Linux / macOS
 
-Ensure the `.env` file exists in `mini-helpdesk/.env` with your MongoDB credentials:
+```bash
+python3 -m venv venv
+```
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+# ☁️ MongoDB Atlas Setup
+
+## 1. Create a MongoDB Atlas Cluster
+
+Create a MongoDB Atlas cluster and obtain your connection string.
+
+Your connection string will look similar to:
+
+```text
+mongodb+srv://<username>:<password>@cluster.mongodb.net/
+```
+
+## 2. Create Environment Variables
+
+Create a `.env` file in the project root:
 
 ```env
-MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/?appName=Cluster0
+MONGODB_URL=your_mongodb_connection_string
 DATABASE_NAME=helpdesk_db
 ```
 
-### 5. Start the FastAPI Backend
-
-Open a terminal window and run:
-
-```powershell
-cd backend
-uvicorn main:app --reload --port 8000
-```
-
-The backend will be available at:
-* API Root: `http://localhost:8000`
-* Interactive Swagger Docs: `http://localhost:8000/docs`
-
-### 6. Start the Streamlit Frontend
-
-Open a **second** terminal window, activate the virtual environment, and run:
-
-```powershell
-cd frontend
-streamlit run app.py --server.port 8501
-```
-
-The frontend will automatically open in your default browser at:
-* Streamlit UI: `http://localhost:8501`
+> ⚠️ Never commit `.env` to GitHub because it may contain database credentials.
 
 ---
 
-## 🐳 Docker Setup (With Docker Compose)
+# ⚙️ Backend Setup
 
-To run the entire stack with Docker:
-
-### 1. Build the Images
+Move into the backend directory:
 
 ```powershell
-docker compose build
+cd backend
 ```
 
-### 2. Start the Containers
+Install dependencies:
 
 ```powershell
-docker compose up
+pip install -r requirements.txt
 ```
 
-*(Add `-d` to run in detached background mode: `docker compose up -d`)*
+Start the FastAPI server:
 
-### 3. Access the Services
+```powershell
+uvicorn main:app --reload
+```
 
-* **Streamlit Web UI**: [http://localhost:8501](http://localhost:8501)
-* **FastAPI Backend**: [http://localhost:8000](http://localhost:8000)
-* **Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+The backend will run at:
 
-### 4. Stop the Containers
+```text
+http://localhost:8000
+```
+
+---
+
+# 📖 API Documentation
+
+FastAPI automatically provides interactive API documentation through Swagger UI.
+
+Open:
+
+```text
+http://localhost:8000/docs
+```
+
+You can use Swagger to:
+
+* View available APIs
+* Send GET requests
+* Create tickets
+* Update tickets
+* Delete tickets
+* Test API responses
+
+---
+
+# 🔌 API Endpoints
+
+| Method   | Endpoint               | Description           |
+| -------- | ---------------------- | --------------------- |
+| `GET`    | `/`                    | Check API status      |
+| `GET`    | `/tickets`             | Get all tickets       |
+| `GET`    | `/tickets/{ticket_id}` | Get a specific ticket |
+| `POST`   | `/tickets`             | Create a new ticket   |
+| `PUT`    | `/tickets/{ticket_id}` | Update a ticket       |
+| `DELETE` | `/tickets/{ticket_id}` | Delete a ticket       |
+| `GET`    | `/dashboard`           | Get ticket statistics |
+
+---
+
+# 📝 Create Ticket
+
+### Endpoint
+
+```text
+POST /tickets
+```
+
+### Example Request
+
+```json
+{
+  "user_name": "Ruthika",
+  "email": "ruthika@example.com",
+  "title": "Login Issue",
+  "description": "Unable to login to the application.",
+  "category": "Account",
+  "priority": "High"
+}
+```
+
+### Default Status
+
+New tickets are created with:
+
+```text
+Open
+```
+
+---
+
+# 🔍 Get Tickets
+
+### Get All Tickets
+
+```text
+GET /tickets
+```
+
+Returns all available support tickets.
+
+### Get a Specific Ticket
+
+```text
+GET /tickets/{ticket_id}
+```
+
+Example:
+
+```text
+GET /tickets/64f123abc456...
+```
+
+---
+
+# 🔄 Update Ticket
+
+### Endpoint
+
+```text
+PUT /tickets/{ticket_id}
+```
+
+The ticket status can be updated to:
+
+```text
+Open
+In Progress
+Resolved
+```
+
+Example:
+
+```json
+{
+  "status": "Resolved"
+}
+```
+
+---
+
+# 🗑️ Delete Ticket
+
+### Endpoint
+
+```text
+DELETE /tickets/{ticket_id}
+```
+
+Deletes the selected ticket from the database.
+
+---
+
+# 📊 Dashboard API
+
+### Endpoint
+
+```text
+GET /dashboard
+```
+
+The dashboard API provides ticket statistics including:
+
+```text
+Total Tickets
+Open Tickets
+In Progress Tickets
+Resolved Tickets
+High Priority Tickets
+```
+
+---
+
+# 🎨 Frontend
+
+The frontend is developed using **Streamlit**.
+
+Start the frontend from the `frontend` directory:
+
+```powershell
+cd frontend
+```
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Run Streamlit:
+
+```powershell
+streamlit run app.py
+```
+
+The application will open in the browser.
+
+---
+
+# 🐳 Docker Setup
+
+Docker is used to containerize both the frontend and backend services.
+
+The project uses **Docker Compose** to run multiple services together.
+
+### Services
+
+```text
+┌─────────────────────┐
+│      Frontend       │
+│     Streamlit       │
+│      Port 8501      │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│       Backend       │
+│       FastAPI       │
+│      Port 8000      │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│    MongoDB Atlas     │
+└─────────────────────┘
+```
+
+---
+
+## ▶️ Run with Docker Compose
+
+From the project root:
+
+```powershell
+docker compose up --build
+```
+
+After the containers start:
+
+### Streamlit
+
+```text
+http://localhost:8501
+```
+
+### FastAPI
+
+```text
+http://localhost:8000
+```
+
+### Swagger
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+## 🛑 Stop Docker Containers
 
 ```powershell
 docker compose down
@@ -239,81 +531,170 @@ docker compose down
 
 ---
 
-## 🧪 API Documentation & Testing (Swagger)
+# 🔐 Environment Variables
 
-FastAPI automatically serves interactive Swagger UI at **`http://localhost:8000/docs`**.
+The project uses environment variables to keep configuration separate from source code.
 
-### 1. Create a Ticket
-* **Method**: `POST`
-* **URL**: `/tickets`
-* **Request Body**:
-```json
-{
-  "user_name": "Ruthika",
-  "email": "ruthika@example.com",
-  "title": "Unable to login",
-  "description": "I cannot login to my account.",
-  "category": "Account",
-  "priority": "High"
-}
-```
-* **Response Status**: `201 Created`
+### `.env`
 
-### 2. View All Tickets
-* **Method**: `GET`
-* **URL**: `/tickets`
-* **Response Status**: `200 OK`
-
-### 3. Search / Get Single Ticket by ID
-* **Method**: `GET`
-* **URL**: `/tickets/{ticket_id}` (e.g. `/tickets/65e90f23a1b2c3d4e5f67890`)
-* **Response Status**: `200 OK`
-
-### 4. Update Ticket Status
-* **Method**: `PUT`
-* **URL**: `/tickets/{ticket_id}`
-* **Request Body**:
-```json
-{
-  "status": "In Progress"
-}
-```
-* **Response Status**: `200 OK`
-
-### 5. Delete Ticket
-* **Method**: `DELETE`
-* **URL**: `/tickets/{ticket_id}`
-* **Response Status**: `200 OK`
-* **Response Body**:
-```json
-{
-  "message": "Ticket with ID '65e90f23a1b2c3d4e5f67890' was successfully deleted.",
-  "ticket_id": "65e90f23a1b2c3d4e5f67890"
-}
+```env
+MONGODB_URL=your_mongodb_connection_string
+DATABASE_NAME=helpdesk_db
 ```
 
-### 6. View Dashboard Metrics
-* **Method**: `GET`
-* **URL**: `/dashboard`
-* **Response Status**: `200 OK`
-* **Response Body**:
-```json
-{
-  "total_tickets": 1,
-  "open_tickets": 0,
-  "in_progress_tickets": 1,
-  "resolved_tickets": 0,
-  "high_priority_tickets": 1
-}
+### `.env.example`
+
+```env
+MONGODB_URL=
+DATABASE_NAME=helpdesk_db
+```
+
+> The actual `.env` file should never be pushed to GitHub.
+
+---
+
+# ⚠️ Error Handling
+
+The backend handles common API errors such as:
+
+* Invalid ticket ID
+* Ticket not found
+* Invalid request data
+* Database-related errors
+* Invalid ticket status
+
+FastAPI returns appropriate HTTP responses for these situations.
+
+---
+
+# 🧪 API Testing
+
+The APIs can be tested using:
+
+* Swagger UI
+* Browser for GET endpoints
+* Postman
+* Streamlit frontend
+
+Swagger UI is available at:
+
+```text
+http://localhost:8000/docs
 ```
 
 ---
 
-## 🛡️ Error Handling
+# 🧠 Key Concepts Practiced
 
-The application handles common edge cases with clear messages:
-* **Invalid Ticket ID**: Returns `400 Bad Request` if the ticket ID is not a valid 24-character hexadecimal ObjectId.
-* **Ticket Not Found**: Returns `404 Not Found` when attempting to fetch, update, or delete a non-existent ticket.
-* **Validation Errors**: Returns `422 Unprocessable Entity` if required fields are missing or if invalid enum values are supplied.
-* **Database / Network Failure**: Returns a clean `500 Internal Server Error` instead of crashing the server.
-* **Frontend Resilience**: If the backend is stopped or unreachable, Streamlit displays an informative error card rather than an unhandled traceback.
+This project demonstrates practical understanding of:
+
+```text
+REST APIs
+   ↓
+FastAPI
+   ↓
+CRUD Operations
+   ↓
+MongoDB
+   ↓
+Streamlit
+   ↓
+Docker
+   ↓
+Docker Compose
+```
+
+---
+
+# 🎯 Learning Outcomes
+
+Through this project, I practiced:
+
+* Building REST APIs using FastAPI
+* Creating CRUD operations
+* Connecting FastAPI with MongoDB Atlas
+* Working with MongoDB collections and documents
+* Handling MongoDB ObjectId serialization
+* Building interactive interfaces using Streamlit
+* Connecting frontend and backend services
+* Testing APIs using Swagger UI
+* Using environment variables securely
+* Containerizing applications with Docker
+* Running multiple services using Docker Compose
+* Understanding Docker service-to-service communication
+
+---
+
+# 🔮 Future Enhancements
+
+Possible future improvements include:
+
+* 🔐 User authentication and role-based access
+* 👥 Admin and support-agent roles
+* 💬 Ticket comments and conversation history
+* 📎 File attachments
+* 📧 Email notifications
+* 📈 Advanced analytics
+* 🔎 Advanced ticket filtering
+* 🤖 AI-powered ticket classification
+* 📊 More detailed support reports
+
+---
+
+# 📌 Project Highlights
+
+```text
+✅ Full-Stack Application
+✅ REST API Architecture
+✅ Cloud Database Integration
+✅ CRUD Operations
+✅ Interactive Dashboard
+✅ Dockerized Application
+✅ Docker Compose
+✅ Swagger API Documentation
+✅ Environment-Based Configuration
+```
+
+---
+
+# 💡 Why This Project?
+
+Mini Helpdesk was built to understand how a real-world application can be divided into independent layers:
+
+```text
+Frontend
+   ↓
+Backend API
+   ↓
+Database
+```
+
+It provides hands-on experience with **API development, database integration, frontend-backend communication, and containerization** using a simple and practical use case.
+
+---
+
+# 👩‍💻 Author
+
+<div align="center">
+
+### Ruthika B
+
+**B.Tech Artificial Intelligence & Data Science**
+
+Interested in **Web Development, Backend Development, AI & Data Technologies**
+
+</div>
+
+---
+
+## ⭐ Support
+
+If you found this project useful, consider giving the repository a ⭐.
+
+<div align="center">
+
+### 🎫 Mini Helpdesk
+
+**Built with ❤️ using FastAPI • Streamlit • MongoDB Atlas • Docker**
+
+</div>
