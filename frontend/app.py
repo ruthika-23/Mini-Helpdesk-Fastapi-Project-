@@ -11,10 +11,17 @@ import streamlit as st
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
-# Read backend URL from environment variable.
-# Local default: http://localhost:8000
-# Docker default: http://backend:8000
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+# Read backend URL from environment variable or Streamlit secrets with localhost fallback
+BACKEND_URL = os.getenv("BACKEND_URL")
+if not BACKEND_URL:
+    try:
+        BACKEND_URL = st.secrets.get("BACKEND_URL")
+    except Exception:
+        pass
+if not BACKEND_URL:
+    BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = BACKEND_URL.rstrip("/")
+
 
 st.set_page_config(
     page_title="Mini Helpdesk",
