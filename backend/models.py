@@ -4,6 +4,7 @@ Defines Pydantic models and Enums for request validation and response formatting
 """
 
 from enum import Enum
+from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -36,12 +37,13 @@ class TicketCreate(BaseModel):
     title: str = Field(..., min_length=1, description="Brief summary of the issue", example="Login problem")
     description: str = Field(..., min_length=1, description="Detailed description of the issue", example="Unable to login")
     category: Category = Field(..., description="Category of the ticket", example=Category.ACCOUNT)
-    priority: Priority = Field(..., description="Priority level", example=Priority.HIGH)
+    priority: Optional[Priority] = Field(default=None, description="Optional priority level. Auto-predicted or defaulted if omitted.", example=Priority.MEDIUM)
 
 
 class TicketUpdate(BaseModel):
     """Schema for updating an existing ticket's status."""
-    status: Status = Field(..., description="New status for the ticket", example=Status.IN_PROGRESS)
+    status: Optional[Status] = Field(default=None, description="New status for the ticket", example=Status.IN_PROGRESS)
+    priority: Optional[Priority] = Field(default=None, description="New priority for the ticket", example=Priority.HIGH)
 
 
 class TicketResponse(BaseModel):
@@ -57,6 +59,21 @@ class TicketResponse(BaseModel):
     created_at: str
 
 
+class PredictionRequest(BaseModel):
+    """Schema for direct complaint priority prediction."""
+    text: str = Field(..., min_length=1, description="Complaint or ticket description text to evaluate", example="Server down error 500")
+
+
+class PredictionResponse(BaseModel):
+    """Schema for priority prediction response."""
+    predicted_priority: Priority
+    confidence: float
+    probabilities: dict
+    complaint_text: Optional[str] = None
+    ticket_id: Optional[str] = None
+    ticket_title: Optional[str] = None
+
+
 class DashboardMetrics(BaseModel):
     """Schema for aggregated dashboard metrics."""
     total_tickets: int = 0
@@ -64,3 +81,4 @@ class DashboardMetrics(BaseModel):
     in_progress_tickets: int = 0
     resolved_tickets: int = 0
     high_priority_tickets: int = 0
+
